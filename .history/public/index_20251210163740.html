@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Msg❤️Dekh</title>
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Remix Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        font-family: "Poppins";
+        color: #fff;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .main {
+        display: flex;
+        height: 100vh;
+      }
+
+      .sidebar {
+        width: 270px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 25px;
+        animation: slideIn 0.6s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(-80px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .sidebar h2 {
+        text-align: center;
+        font-size: 26px;
+        margin-bottom: 30px;
+      }
+
+      .menu-item {
+        padding: 15px;
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 18px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.04);
+        box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+      }
+
+      .active {
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 0 10px #ffffff67;
+      }
+
+      .screen {
+        flex: 1;
+        padding: 20px;
+        display: none;
+        animation: fade 0.5s ease;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .top-bar {
+        width: 100%;
+        padding: 15px 25px;
+        background: #1f2937;
+        border-bottom: 2px solid #374151;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 20px;
+      }
+
+      /* Search List */
+      #searchResults {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .search-item {
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        margin-top: 10px;
+        cursor: pointer;
+        transition: 0.25s;
+      }
+
+      .search-item:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.02);
+      }
+      .fancy-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
+        font-weight: 600;
+        border-radius: 30px;
+      }
+
+      /* Hover par smooth scale effect */
+      .fancy-btn:hover {
+        transform: scale(1.07);
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Button ke andar glow animation */
+      .fancy-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: skewX(-45deg);
+      }
+
+      /* Hover par glow slide effect */
+      .fancy-btn:hover::before {
+        animation: slide 0.6s forwards;
+      }
+
+      @keyframes slide {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 120%;
+        }
+      }
+      .heartbeat {
+        display: inline-block;
+        animation: heartBeat 0.8s infinite;
+        transform-origin: center;
+      }
+
+      @keyframes heartBeat {
+        0% {
+          transform: scale(1);
+        }
+        30% {
+          transform: scale(1.3);
+        }
+        50% {
+          transform: scale(1);
+        }
+        70% {
+          transform: scale(1.3);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <span id="chat-username">Welcome</span>
+
+      <button class="btn btn-danger btn-sm" onclick="logoutUser()">
+        Logout
+      </button>
+    </div>
+
+    <div class="main">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <h2>Msg <span class="heartbeat">❤️</span> Dekh</h2>
+
+        <li class="menu-item" id="menuFriends" onclick="toggleFriendMenu()">
+          <i class="fa-solid fa-user"></i>Friends
+        </li>
+
+        <ul id="friendSubmenu" style="display: none; margin-left: 20px">
+          <li
+            class="menu-item"
+            id="menuFriendRequests"
+            onclick="loadFriendRequests()"
+          >
+            Friend Requests
+          </li>
+          <li class="menu-item" id="menuMyFriends" onclick="loadMyFriends()">
+            My Friends
+          </li>
+        </ul>
+
+        <div class="menu-item" onclick="switchScreen('groups', this)">
+          <i class="fa-solid fa-user-group"></i> Groups
+        </div>
+      </div>
+      <!-- GROUP SUBMENU -->
+      <ul id="groupSubmenu" style="display: none; margin-left: 20px">
+        <li class="menu-item" onclick="switchScreen('createGroupScreen')">
+          Create Group
+        </li>
+
+        <li class="menu-item" onclick="switchScreen('groupRequestsScreen')">
+          Group Requests
+        </li>
+
+        <li class="menu-item" onclick="switchScreen('myGroupsScreen')">
+          My Groups
+        </li>
+      </ul>
+
+      <div class="screen" id="friends" style="display: block">
+        <h2>Search Friends</h2>
+        <input
+          id="searchInput"
+          type="text"
+          class="form-control mt-3"
+          placeholder="Search users..."
+        />
+        <ul id="searchResults" class="mt-3 p-0"></ul>
+      </div>
+
+      <!-- REQUEST FRIENDS SCREEN -->
+      <div class="screen" id="friendRequests" style="display: none">
+        <h2>Friend Requests</h2>
+        <ul id="requestsList" class="mt-3 p-0"></ul>
+      </div>
+
+      <!-- MY FRIENDS SCREEN -->
+      <div class="screen" id="myFriendsScreen" style="display: none">
+        <h2>My Friends</h2>
+        <ul id="myFriendsList" class="mt-3 p-0"></ul>
+      </div>
+
+      <!-- CREATE GROUP SCREEN -->
+      <div class="screen" id="createGroupScreen" style="display: none">
+        <h2>Create Group</h2>
+
+        <form id="createGroupForm" enctype="multipart/form-data">
+          <input
+            type="text"
+            id="groupName"
+            class="form-control mt-2"
+            placeholder="Group Name"
+          />
+
+          <textarea
+            id="groupBio"
+            class="form-control mt-2"
+            placeholder="Group Bio"
+          ></textarea>
+
+          <input type="file" id="groupImage" class="form-control mt-2" />
+
+          <button
+            type="button"
+            class="btn btn-primary mt-3"
+            onclick="createGroup()"
+          >
+            Create
+          </button>
+        </form>
+      </div>
+
+      <!-- GROUP REQUESTS SCREEN -->
+      <div class="screen" id="groupRequestsScreen" style="display: none">
+        <h2>Group Join Requests</h2>
+        <ul id="groupRequestList"></ul>
+      </div>
+
+      <!-- MY GROUPS SCREEN -->
+      <div class="screen" id="myGroupsScreen" style="display: none">
+        <h2>My Groups</h2>
+        <ul id="myGroupsList"></ul>
+      </div>
+    </div>
+    <script src="/public/js/chat.js"></script>
+    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      /* ------------------ GET USER ID ------------------ */
+      function getUserId() {
+        return Number(localStorage.getItem("userId"));
+      }
+      /* ---------- FRIEND MENU TOGGLE ---------- */
+      function toggleFriendMenu() {
+        const menu = document.getElementById("friendSubmenu");
+        menu.style.display = menu.style.display === "none" ? "block" : "none";
+      }
+
+      /* ⭐ ADDED: SET USERNAME IN NAVBAR ⭐ */
+      (function showUsername() {
+        const userData = localStorage.getItem("user");
+
+        if (userData) {
+          const user = JSON.parse(userData);
+          document.getElementById(
+            "chat-username"
+          ).textContent = `Welcome, ${user.username}`;
+        }
+      })();
+      /* ---------------- SCREEN SWITCHER ---------------- */
+      function switchScreen(screenId) {
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => (s.style.display = "none"));
+        document.getElementById(screenId).style.display = "block";
+      }
+
+      /* ---------------- SEARCH FRIENDS ---------------- */
+      document
+        .getElementById("searchInput")
+        .addEventListener("keyup", async function () {
+          const query = this.value.trim();
+          const resultsBox = document.getElementById("searchResults");
+
+          if (query.length === 0) {
+            resultsBox.innerHTML = "";
+            return;
+          }
+
+          try {
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`/api/friends/search?username=${query}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+
+            const data = await res.json();
+            const users = data.users || [];
+
+            let html = "";
+            users.forEach((user) => {
+              html += `
+            <li class="search-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded shadow-sm" data-id="${user.id}">
+                <strong>${user.username}</strong>
+
+                <div class="btn-group">
+                    <button class="send-req-btn btn btn-primary fancy-btn" data-id="${user.id}">
+                        Send Request
+                    </button>
+
+                    <button class="msg-btn btn btn-success fancy-btn" data-id="${user.id}">
+                        Message
+                    </button>
+                </div>
+            </li>
+            `;
+            });
+
+            resultsBox.innerHTML = html;
+          } catch (err) {
+            console.error("Search failed:", err);
+          }
+        });
+
+      /* ---------------- SEARCH LIST CLICK EVENTS ---------------- */
+      document
+        .getElementById("searchResults")
+        .addEventListener("click", async function (e) {
+          const target = e.target;
+
+          /* ---- SEND REQUEST ---- */
+          if (target.classList.contains("send-req-btn")) {
+            const receiverId = target.dataset.id;
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+              alert("Token not found — please login again.");
+              return;
+            }
+
+            const res = await fetch(`/api/friends/send`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ receiverId }), // ⭐ EXACT NAMED PARAM
+            });
+
+            const data = await res.json();
+            alert(data.msg);
+            return;
+          }
+        });
+
+      // ---------pending--------------------
+      function loadFriendRequests() {
+        // Only show friend request screen
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => (s.style.display = "none"));
+        document.getElementById("friendRequests").style.display = "block";
+
+        const token = localStorage.getItem("token");
+
+        fetch(`/api/friends/pending`, {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            const list = document.getElementById("requestsList");
+            list.innerHTML = "";
+
+            if (!data.success || data.requests.length === 0) {
+              list.innerHTML = `<p>No pending friend requests.</p>`;
+              return;
+            }
+
+            data.requests.forEach((req) => {
+              list.innerHTML += `
+                <li class="d-flex justify-content-between align-items-center p-2 mb-2 border rounded shadow-sm">
+                    <strong>${req.Sender.username}</strong>
+
+                    <div class="btn-group">
+                        <button class="btn btn-success btn-sm fancy-btn" onclick="acceptFriend(${req.id})">Accept</button>
+                        <button class="btn btn-danger btn-sm fancy-btn" onclick="rejectFriend(${req.id})">Reject</button>
+                    </div>
+                </li>
+            `;
+            });
+          })
+          .catch((err) => console.error("Error loading requests:", err));
+      }
+      // accept------------------------------------
+      async function acceptFriend(requestId) {
+        try {
+          const token = localStorage.getItem("token");
+
+          const res = await fetch(`/api/friends/accept/${requestId}`, {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + token,
+              "Content-Type": "application/json",
+            },
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            alert(data.msg || "Friend request accepted!");
+            loadFriendRequests(); // pending list refresh
+            loadMyFriends(); // My Friends list refresh
+          } else {
+            alert(data.msg || "Failed to accept friend request");
+          }
+        } catch (err) {
+          console.error("Accept error:", err);
+          alert("Error accepting friend request");
+        }
+      }
+
+      // reject-------
+      function rejectFriend(requestId) {
+        const token = localStorage.getItem("token");
+
+        fetch(`/api/friends/reject/${requestId}`, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            alert(data.msg || "Rejected");
+            loadFriendRequests();
+          })
+          .catch((err) => console.error("Reject error:", err));
+      }
+
+      /* ---------------- LOGOUT ---------------- */
+      function logoutUser() {
+        localStorage.removeItem("token");
+        location.href = "/auth.html";
+      }
+
+      // Ye ensure karega ki accept hone ke baad friend list update ho.
+      function loadMyFriends() {
+        switchScreen("myFriendsScreen");
+
+        const token = localStorage.getItem("token");
+        const list = document.getElementById("myFriendsList");
+
+        list.innerHTML = "<p>Loading...</p>";
+
+        fetch(`/api/friends/all`, {
+          headers: { Authorization: "Bearer " + token },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            list.innerHTML = "";
+
+            if (!data.success || data.friends.length === 0) {
+              list.innerHTML = "<p>No friends yet</p>";
+              return;
+            }
+
+            data.friends.forEach((f) => {
+              const myId = getUserId();
+              const friendUser = f.senderId === myId ? f.Receiver : f.Sender;
+
+              list.innerHTML += `
+          <li class="search-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded shadow-sm">
+            <strong>${friendUser.username}</strong>
+            <button class="btn btn-success btn-sm" onclick="startChat(${
+              friendUser.id
+            }, '${friendUser.username.replace("'", "\\'")}')">Message</button>
+          </li>
+        `;
+            });
+          });
+      }
+      //
+      function openChatWith(userId) {
+        switchScreen("chatScreen", document.getElementById("menuChats"));
+        loadChatMessages(userId);
+      }
+
+      function startChat(friendId, friendName) {
+        localStorage.setItem("chatUserId", String(friendId));
+        localStorage.setItem("chatUserName", String(friendName));
+        // navigate to chat page
+        window.location.href = "/chat.html";
+      }
+    </script>
+  </body>
+</html>

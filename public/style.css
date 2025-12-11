@@ -1,0 +1,74 @@
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+flex: 1;
+padding: 16px;
+background: #ece5dd;
+overflow-y: auto;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+
+.msg {
+max-width: 72%;
+padding: 10px 14px;
+border-radius: 18px;
+font-size: 14px;
+line-height: 1.25;
+box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+opacity: 0;
+transform: translateY(8px);
+animation: slideUp 220ms ease forwards;
+}
+
+
+.msg.me {
+background: #dcf8c6;
+align-self: flex-end;
+border-bottom-right-radius: 6px;
+}
+
+
+.msg.you {
+background: #fff;
+align-self: flex-start;
+border-bottom-left-radius: 6px;
+}
+
+
+@keyframes slideUp {
+to { opacity: 1; transform: translateY(0); }
+}
+
+
+.input-area {
+padding: 12px;
+display: flex;
+gap: 10px;
+background: #f7f7f7;
+border-top: 1px solid rgba(0,0,0,0.04);
+}
+
+
+.input-area input {
+flex: 1;
+padding: 10px 14px;
+border-radius: 24px;
+border: 1px solid #ddd;
+outline: none;
+font-size: 14px;
+}
+
+
+.input-area button {
+background: linear-gradient(90deg,#075E54,#128C7E);
+color: #fff;
+border: none;
+padding: 10px 14px;
+border-radius: 20px;
+cursor: pointer;
+font-weight: 600;
+}
+
+
+.small-meta { font-size: 11px; color: #666; margin-top:6px; }

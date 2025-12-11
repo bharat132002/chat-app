@@ -1,0 +1,79 @@
+<!doctype html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Group Chat</title>
+<link rel="stylesheet" href="/public/css/">
+</head><body>
+<div class="chat-shell">
+  <div class="chat-header"><h2 id="groupTitle">Group</h2></div>
+  <div id="groupMessages" class="messages"></div>
+  <div class="chat-input-area">
+    <input id="groupMsgInput" type="text" placeholder="Message..." />
+    <button id="groupSendBtn">Send</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+  // get groupId from query param
+  const params = new URLSearchParams(location.search);
+  const groupId = params.get('groupId');
+
+  if (!groupId) { alert('No groupId'); location.href = '/'; }
+
+  document.getElementById('groupTitle').textContent = 'Group #' + groupId;
+
+  // join group room
+  socket.emit('joinGroup', { groupId: Number(groupId) });
+
+  // load old messages
+  (async function load(){
+    const res = await fetch('/api/groupMessages/' + groupId, { headers: { Authorization: 'Bearer ' + token }});
+    const data = await res.json();
+    const box = document.getElementById('groupMessages');
+    box.innerHTML = '';
+    (data || []).forEach(m => {
+      const d = document.createElement('div');
+      d.className = (m.senderId === user.id) ? 'msg out' : 'msg in';
+      d.innerHTML = `<div class="text">${m.message}</div><div class="meta">${new Date(m.createdAt).toLocaleTimeString()}</div>`;
+      box.appendChild(d);
+    });
+    box.scrollTop = box.scrollHeight;
+  })();
+
+  document.getElementById('groupSendBtn').addEventListener('click', async ()=>{
+    const text = document.getElementById('groupMsgInput').value.trim();
+    if (!text) return;
+    const msg = { senderId: user.id, groupId: Number(groupId), message: text, createdAt: new Date().toISOString() };
+
+    // send via socket
+    socket.emit('sendGroupMessage', msg);
+
+    // persist
+    await fetch('/api/groupMessages', { method:'POST', headers:{ 'Content-Type':'application/json','Authorization':'Bearer ' + token }, body:JSON.stringify(msg) });
+
+    // optimistic UI
+    const box = document.getElementById('groupMessages');
+    const d = document.createElement('div');
+    d.className = 'msg out';
+    d.innerHTML = `<div class="text">${msg.message}</div><div class="meta">${new Date(msg.createdAt).toLocaleTimeString()}</div>`;
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+    document.getElementById('groupMsgInput').value = '';
+  });
+
+  socket.on('receiveGroupMessage', (msg) => {
+    if (String(msg.groupId) !== String(groupId)) return;
+    const box = document.getElementById('groupMessages');
+    const d = document.createElement('div');
+    d.className = (msg.senderId === user.id) ? 'msg out' : 'msg in';
+    d.innerHTML = `<div class="text">${msg.message}</div><div class="meta">${new Date(msg.createdAt).toLocaleTimeString()}</div>`;
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+  });
+</script>
+</body></html>

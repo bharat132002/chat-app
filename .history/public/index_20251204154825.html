@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chat App</title>
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" />
+
+<style>
+  body { margin:0; font-family:Poppins; background:linear-gradient(135deg,#0f0c29,#302b63,#24243e); color:#fff; height:100vh; overflow:hidden; }
+  .main { display:flex; height:100vh; }
+  .sidebar { width:270px; background:rgba(255,255,255,0.08); backdrop-filter:blur(15px); border-right:1px solid rgba(255,255,255,0.2); padding:25px; }
+  .sidebar h2 { text-align:center; margin-bottom:30px; }
+  .menu-item { padding:12px; margin-top:10px; cursor:pointer; border-radius:12px; transition:0.3s; background:rgba(255,255,255,0.05); display:flex; align-items:center; gap:10px; }
+  .menu-item:hover { background:rgba(255,255,255,0.2); transform:scale(1.04); box-shadow:0 0 12px rgba(255,255,255,0.3); }
+  .active { background:rgba(255,255,255,0.25); box-shadow:0 0 10px #ffffff67; }
+  .screen { flex:1; padding:20px; display:none; overflow-y:auto; }
+  .top-bar { width:100%; padding:15px 25px; background:#1f2937; display:flex; justify-content:space-between; align-items:center; font-size:20px; }
+  #searchResults, #requestsList, #friendList { list-style:none; padding-left:0; }
+  .search-item, .friend-item, .req-box { padding:10px 15px; margin-top:8px; background:rgba(255,255,255,0.1); border-radius:10px; display:flex; justify-content:space-between; align-items:center; }
+  .search-item:hover, .friend-item:hover, .req-box:hover { background:rgba(255,255,255,0.25); transform:scale(1.02); }
+  .btn-group button { margin-left:5px; }
+  .fancy-btn { position:relative; overflow:hidden; transition:all 0.3s ease-in-out; font-weight:600; border-radius:30px; }
+  .fancy-btn:hover { transform:scale(1.07); box-shadow:0px 4px 15px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <span id="chat-username">Welcome</span>
+  <button class="btn btn-danger btn-sm" onclick="logoutUser()">Logout</button>
+</div>
+
+<div class="main">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Chat App</h2>
+    <li class="menu-item" id="menuFriends" onclick="toggleFriendMenu()"><i class="fa-solid fa-user"></i> Friends</li>
+    <ul id="friendSubmenu" style="display:none; margin-left:20px;">
+      <li class="menu-item" id="menuFriendRequests" onclick="loadFriendRequests()">Friend Requests</li>
+      <li class="menu-item" id="menuMyFriends" onclick="loadFriends()">My Friends</li>
+    </ul>
+    <div class="menu-item" onclick="switchScreen('groups', this)"><i class="fa-solid fa-user-group"></i> Groups</div>
+  </div>
+
+  <!-- Screens -->
+  <div class="screen" id="friends" style="display:block;">
+    <h2>Search Friends</h2>
+    <input id="searchInput" type="text" class="form-control mt-3" placeholder="Search users..." />
+    <ul id="searchResults"></ul>
+    <ul id="requestsList"></ul>
+    <ul id="friendList"></ul>
+  </div>
+
+  <div class="screen" id="groups">
+    <h2>Groups</h2>
+  </div>
+</div>
+
+<script>
+/* ---------- FRIEND MENU TOGGLE ---------- */
+function toggleFriendMenu() {
+    const menu = document.getElementById("friendSubmenu");
+    menu.style.display = menu.style.display === "none" ? "block" : "none";
+}
+
+/* ---------- SET USERNAME ---------- */
+(function showUsername() {
+    const userData = localStorage.getItem("user");
+    if(userData){
+        const user = JSON.parse(userData);
+        document.getElementById("chat-username").textContent = `Welcome, ${user.username}`;
+    }
+})();
+
+/* ---------- SCREEN SWITCH ---------- */
+function switchScreen(screen, element){
+    document.querySelectorAll(".menu-item").forEach(i=>i.classList.remove("active"));
+    element.classList.add("active");
+    document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
+    document.getElementById(screen).style.display="block";
+}
+
+/* ---------- SEARCH USERS ---------- */
+document.getElementById("searchInput").addEventListener("keyup", async function(){
+    const query = this.value.trim();
+    const resultsBox = document.getElementById("searchResults");
+    if(!query){ resultsBox.innerHTML=""; return; }
+
+    const token = localStorage.getItem("token");
+    if(!token){ alert("Login first"); return; }
+
+    const res = await fetch(`/api/friends/search?username=${query}`, {
+        headers:{ "Authorization": `Bearer ${token}`, "Content-Type":"application/json" }
+    });
+    const data = await res.json();
+    const users = data.users || [];
+
+    let html="";
+    users.forEach(u=>{
+        html+=`
+        <li class="search-item" data-id="${u.id}">
+            <strong>${u.username}</strong>
+            <div class="btn-group">
+                <button class="send-req-btn btn btn-primary fancy-btn" data-id="${u.id}">Send Request</button>
+                <button class="msg-btn btn btn-success fancy-btn" data-id="${u.id}">Message</button>
+            </div>
+        </li>
+        `;
+    });
+    resultsBox.innerHTML = html;
+});
+
+/* ---------- CLICK EVENTS: SEND/MSG ---------- */
+document.getElementById("searchResults").addEventListener("click", async function(e){
+    const target = e.target;
+    const token = localStorage.getItem("token");
+    if(!token){ alert("Login first"); return; }
+
+    // SEND REQUEST
+    if(target.classList.contains("send-req-btn")){
+        const userId = target.dataset.id;
+        const res = await fetch(`/api/friends/request/${userId}`, {
+            method:"POST",
+            headers:{ "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        alert(data.msg || data.message);
+        loadFriendRequests();
+        return;
+    }
+
+    // MESSAGE BUTTON (dummy)
+    if(target.classList.contains("msg-btn")){
+        const userId = target.dataset.id;
+        alert("Open chat with user ID: "+userId);
+        return;
+    }
+});
+
+/* ---------- LOAD FRIEND REQUESTS ---------- */
+async function loadFriendRequests(){
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/friends/pending", {
+        headers:{ "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const list = document.getElementById("requestsList");
+    let html="";
+    (data.requests||[]).forEach(req=>{
+        html+=`
+        <li class="req-box" data-id="${req.id}">
+            ${req.Sender.username}
+            <button class="accept-btn btn btn-success btn-sm" data-id="${req.id}">Accept</button>
+            <button class="reject-btn btn btn-danger btn-sm" data-id="${req.id}">Reject</button>
+        </li>`;
+    });
+    list.innerHTML = html;
+}
+
+/* ---------- ACCEPT / REJECT ---------- */
+document.getElementById("friends").addEventListener("click", async function(e){
+    const token = localStorage.getItem("token");
+    const id = e.target.dataset.id;
+    if(!id) return;
+
+    if(e.target.classList.contains("accept-btn")){
+        const res = await fetch(`/api/friends/accept/${id}`, { method:"POST", headers:{ "Authorization": `Bearer ${token}` }});
+        const data = await res.json();
+        alert(data.msg);
+        loadFriendRequests();
+        loadFriends();
+    }
+
+    if(e.target.classList.contains("reject-btn")){
+        const res = await fetch(`/api/friends/reject/${id}`, { method:"POST", headers:{ "Authorization": `Bearer ${token}` }});
+        const data = await res.json();
+        alert(data.msg);
+        loadFriendRequests();
+    }
+});
+
+/* ---------- LOAD FRIENDS LIST ---------- */
+async function loadFriends(){
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/friends/list", { headers:{ "Authorization": `Bearer ${token}` } });
+    const data = await res.json();
+    const list = document.getElementById("friendList");
+    let html="";
+    (data.friends||[]).forEach(f=>{
+        html+=`<li class="friend-item" data-id="${f.id}">${f.username}</li>`;
+    });
+    list.innerHTML = html;
+}
+
+/* ---------- CLICK FRIEND TO OPEN CHAT ---------- */
+document.getElementById("friendList").addEventListener("click", function(e){
+    const li = e.target.closest(".friend-item");
+    if(!li) return;
+    const userId = li.dataset.id;
+    alert("Open chat with friend ID: "+userId);
+});
+
+/* ---------- LOGOUT ---------- */
+function logoutUser(){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    location.href="/auth.html";
+}
+
+/* ---------- AUTO LOAD FRIENDS ON START ---------- */
+loadFriends();
+loadFriendRequests();
+</script>
+
+</body>
+</html>

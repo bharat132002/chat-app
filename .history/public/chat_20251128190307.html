@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Chat UI</title>
+
+    <!-- Remix Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+
+    <style>
+
+        /* GLOBAL */
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            font-family: 'Poppins';
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* WRAPPER */
+        .main {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 270px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255,255,255,0.2);
+            animation: slideIn 0.6s ease;
+            padding: 25px;
+        }
+
+        @keyframes slideIn {
+            from {transform: translateX(-80px); opacity: 0;}
+            to   {transform: translateX(0); opacity: 1;}
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            font-size: 26px;
+            letter-spacing: 1px;
+            margin-bottom: 30px;
+        }
+
+        .menu-item {
+            padding: 15px;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.04);
+            box-shadow: 0 0 12px rgba(255,255,255,0.3);
+        }
+
+        .active {
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 0 10px #ffffff67;
+        }
+
+        /* SCREENS */
+        .screen {
+            flex: 1;
+            padding: 20px;
+            display: none;
+            animation: fade 0.5s ease;
+            height: 100vh;
+        }
+
+        @keyframes fade {
+            from {opacity: 0; transform: translateY(20px);}
+            to   {opacity: 1; transform: translateY(0);}
+        }
+
+        .chat-card {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .chat-card:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateX(6px);
+        }
+
+        /* CHAT WINDOW */
+        #chatWindow {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.06);
+            padding: 20px;
+            border-radius: 15px;
+            height: 75vh;
+        }
+
+        .msg {
+            padding: 12px 18px;
+            margin: 12px 0;
+            max-width: 60%;
+            border-radius: 18px;
+            animation: pop 0.3s ease;
+        }
+
+        @keyframes pop {
+            from {transform: scale(0.85); opacity: 0;}
+            to   {transform: scale(1); opacity: 1;}
+        }
+
+        .left { background: #ffffff24; align-self: flex-start; }
+        .right { background: #4b8bff; align-self: flex-end; }
+
+        /* INPUT BOX */
+        .input-area {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            outline: none;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 16px;
+        }
+
+        .send-btn {
+            padding: 14px 25px;
+            border-radius: 12px;
+            border: none;
+            background: #4b8bff;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.06);
+            background: #6ea0ff;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="top-bar">
+    <span id="chat-username">Loading...</span>
+
+    <button class="logout-btn" onclick="logoutUser()">
+        Logout
+    </button>
+</div>
+
+
+<div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>Chat App</h2>
+
+        <div class="menu-item active" onclick="switchScreen('friends', this)">
+            <i class="ri-user-3-line"></i> Friends
+        </div>
+
+        <div class="menu-item" onclick="switchScreen('groups', this)">
+            <i class="ri-group-line"></i> Groups
+        </div>
+    </div>
+
+    <!-- SCREENS -->
+    <div class="screen" id="friends" style="display:block;">
+        <h2>Friends</h2>
+
+        <div class="chat-card" onclick="openChat('Rohit')">Rohit</div>
+        <div class="chat-card" onclick="openChat('Aman')">Aman</div>
+    </div>
+
+    <div class="screen" id="groups">
+        <h2>Groups</h2>
+
+        <div class="chat-card">➕ Create Group (Next Step)</div>
+        <div class="chat-card">📌 My Groups</div>
+    </div>
+
+    <!-- CHAT WINDOW -->
+    <div class="screen" id="chatWindow">
+        <h2 id="chatTitle">Chat</h2>
+
+        <div id="messages"></div>
+
+        <div class="input-area">
+            <input type="text" id="msgInput" placeholder="Type message..." />
+            <button class="send-btn" onclick="sendMsg()">Send</button>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    function switchScreen(screen, element) {
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        element.classList.add('active');
+
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById(screen).style.display = 'block';
+    }
+
+    function openChat(name) {
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById('chatWindow').style.display = 'block';
+        document.getElementById('chatTitle').innerText = name;
+    }
+
+    function sendMsg() {
+        let text = document.getElementById('msgInput').value;
+        if (!text) return;
+
+        let box = document.createElement("div");
+        box.className = "msg right";
+        box.innerText = text;
+
+        document.getElementById("messages").appendChild(box);
+        document.getElementById("msgInput").value = "";
+    }
+</script>
+
+</body>
+</html>

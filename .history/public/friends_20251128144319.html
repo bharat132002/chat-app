@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Friends Chat</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(145deg, #0f2027, #203a43, #2c5364);
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* LEFT USER LIST */
+        .user-list {
+            width: 25%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 20px;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-item {
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .user-item:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateX(5px);
+        }
+
+        /* RIGHT CHAT AREA */
+        .chat-area {
+            width: 75%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            color: white;
+            position: relative;
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Message bubbles */
+        .msg {
+            max-width: 70%;
+            margin: 10px 0;
+            padding: 12px 18px;
+            border-radius: 20px;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .me {
+            background: #4da8da;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+
+        .other {
+            background: #eeeeee;
+            color: #000;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+
+        /* Input */
+        .chat-input {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            border-radius: 12px;
+            padding: 12px;
+            border: none;
+            outline: none;
+        }
+
+        .send-btn {
+            background: #56cfe1;
+            padding: 12px 20px;
+            color: #000;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .send-btn:hover {
+            background: #64dfdf;
+            transform: scale(1.07);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="chat-app">
+
+    <!-- LEFT USERS PANEL -->
+    <div class="user-list">
+        <h3>Friends</h3>
+        <div onclick="selectUser('User1')" class="user-item">User 1</div>
+        <div onclick="selectUser('User2')" class="user-item">User 2</div>
+    </div>
+
+    <!-- RIGHT CHAT AREA -->
+    <div class="chat-area">
+        <h3 id="chatWith">Select a friend</h3>
+
+        <div class="chat-box" id="chatBox"></div>
+
+        <div class="chat-input">
+            <input id="msgInput" placeholder="Type message..." />
+            <button class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let selectedUser = null;
+
+    function selectUser(user) {
+        selectedUser = user;
+        document.getElementById("chatWith").innerText = "Chat with " + user;
+        document.getElementById("chatBox").innerHTML = "";
+    }
+
+    function sendMessage() {
+        if (!selectedUser) {
+            alert("Please select a friend first!");
+            return;
+        }
+
+        let msg = document.getElementById("msgInput").value;
+
+        if (msg.trim() === "") return;
+
+        let div = document.createElement("div");
+        div.className = "msg me";
+        div.innerText = msg;
+        document.getElementById("chatBox").appendChild(div);
+        document.getElementById("msgInput").value = "";
+    }
+</script>
+
+</body>
+</html>

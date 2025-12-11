@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat App</title>
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Remix Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        font-family: "Poppins";
+        color: #fff;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .main {
+        display: flex;
+        height: 100vh;
+      }
+
+      .sidebar {
+        width: 270px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 25px;
+        animation: slideIn 0.6s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(-80px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .sidebar h2 {
+        text-align: center;
+        font-size: 26px;
+        margin-bottom: 30px;
+      }
+
+      .menu-item {
+        padding: 15px;
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 18px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.04);
+        box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+      }
+
+      .active {
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 0 10px #ffffff67;
+      }
+
+      .screen {
+        flex: 1;
+        padding: 20px;
+        display: none;
+        animation: fade 0.5s ease;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .top-bar {
+        width: 100%;
+        padding: 15px 25px;
+        background: #1f2937;
+        border-bottom: 2px solid #374151;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 20px;
+      }
+
+      /* Search List */
+      #searchResults {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .search-item {
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        margin-top: 10px;
+        cursor: pointer;
+        transition: 0.25s;
+      }
+
+      .search-item:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.02);
+      }
+      .fancy-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
+        font-weight: 600;
+        border-radius: 30px;
+      }
+
+      /* Hover par smooth scale effect */
+      .fancy-btn:hover {
+        transform: scale(1.07);
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Button ke andar glow animation */
+      .fancy-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: skewX(-45deg);
+      }
+
+      /* Hover par glow slide effect */
+      .fancy-btn:hover::before {
+        animation: slide 0.6s forwards;
+      }
+
+      @keyframes slide {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 120%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+     <span id="chat-username">Welcome</span>
+      <button class="btn btn-danger btn-sm" onclick="logoutUser()">
+        Logout
+      </button>
+    </div>
+
+    <div class="main">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <h2>Chat App</h2>
+
+        <li class="menu-item" id="menuFriends" onclick="toggleFriendMenu()">
+         <i class="fa-solid fa-user"></i>Friends
+        </li>
+
+        <ul id="friendSubmenu" style="display: none; margin-left: 20px">
+          <li
+            class="menu-item"
+            id="menuFriendRequests"
+            onclick="loadFriendRequests()"
+          >
+            Friend Requests
+          </li>
+          <li class="menu-item" id="menuMyFriends" onclick="loadMyFriends()">
+            My Friends
+          </li>
+        </ul>
+
+        <div class="menu-item" onclick="switchScreen('groups', this)">
+          <i class="fa-solid fa-user-group"></i> Groups
+        </div>
+      </div>
+
+      <!-- FRIENDS SCREEN -->
+      <div class="screen" id="friends" style="display: block">
+        <h2>Search Friends</h2>
+
+        <input
+          id="searchInput"
+          type="text"
+          class="form-control mt-3"
+          placeholder="Search users..."
+        />
+
+        <ul id="searchResults" class="mt-3 p-0"></ul>
+      </div>
+
+      <!-- GROUPS SCREEN -->
+      <div class="screen" id="groups">
+        <h2>Groups</h2>
+      </div>
+    </div>
+    <script src="/public/js/chat.js"></script>
+    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- <script>
+      /* ---------------- SCREEN SWITCHER ---------------- */
+      function switchScreen(screen, element) {
+        document
+          .querySelectorAll(".menu-item")
+          .forEach((i) => i.classList.remove("active"));
+        element.classList.add("active");
+
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => (s.style.display = "none"));
+        document.getElementById(screen).style.display = "block";
+      }
+
+      /* ---------------- SEARCH FRIENDS ---------------- */
+      document
+        .getElementById("searchInput")
+        .addEventListener("keyup", async function () {
+          const query = this.value.trim();
+          const resultsBox = document.getElementById("searchResults");
+
+          if (query.length === 0) {
+            resultsBox.innerHTML = "";
+            return;
+          }
+
+          try {
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`/api/friends/search?username=${query}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+
+            const data = await res.json();
+            const users = data.users || [];
+
+            let html = "";
+            users.forEach((user) => {
+              html += `
+       <li class="search-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded shadow-sm" data-id="${user.id}">
+    <strong>${user.username}</strong>
+
+    <div class="btn-group">
+        <button class="send-req-btn btn btn-primary fancy-btn" data-id="${user.id}">
+            Send Request
+        </button>
+
+        <button class="msg-btn btn btn-success fancy-btn" data-id="${user.id}">
+            Message
+        </button>
+    </div>
+</li>
+    `;
+            });
+
+            resultsBox.innerHTML = html;
+          } catch (err) {
+            console.error("Search failed:", err);
+          }
+        });
+
+      /* ---------------- CLICK ON FRIEND ---------------- */
+      document.addEventListener("click", function (e) {
+        const item = e.target.closest(".search-item");
+        if (!item) return;
+
+        const friendId = item.getAttribute("data-id");
+
+        openChatWith(friendId);
+
+        document.getElementById("searchResults").innerHTML = "";
+        document.getElementById("searchInput").value = "";
+      });
+
+      /* ---------------- CHAT OPEN DUMMY ---------------- */
+      function openChatWith(id) {
+        alert("Chat open with user ID: " + id);
+      }
+
+      /* ---------------- LOGOUT ---------------- */
+      function logoutUser() {
+        localStorage.removeItem("token");
+        location.href = "/auth.html";
+      }
+
+      document
+        .getElementById("searchResults")
+        .addEventListener("click", async function (e) {
+          const target = e.target;
+
+          // REQUEST BUTTON
+          if (target.classList.contains("send-req-btn")) {
+            const userId = target.dataset.id;
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`/api/friends/request/${userId}`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = await res.json();
+            alert(data.message);
+          }
+
+          // MESSAGE BUTTON
+          if (target.classList.contains("msg-btn")) {
+            const userId = target.dataset.id;
+
+            // Chat page open ho — same index.html me dynamic
+            window.location.href = `/chat/${userId}`;
+          }
+        });
+
+        document.getElementById("menuRequests").addEventListener("click", async () => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/api/friends/requests", {
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+
+    let html = "<h3>Friend Requests</h3>";
+
+    data.requests.forEach(req => {
+        html += `
+            <div>
+                ${req.username} sent you a request
+                <button class="accept-btn" data-id="${req.id}">Accept</button>
+            </div>
+        `;
+    });
+
+    document.getElementById("chatArea").innerHTML = html;
+});
+    </script> -->
+
+    <script>
+      /* ---------- FRIEND MENU TOGGLE ---------- */
+      function toggleFriendMenu() {
+        const menu = document.getElementById("friendSubmenu");
+        menu.style.display = menu.style.display === "none" ? "block" : "none";
+      }
+
+      /* ⭐ ADDED: SET USERNAME IN NAVBAR ⭐ */
+      (function showUsername() {
+        const userData = localStorage.getItem("user");
+
+        if (userData) {
+          const user = JSON.parse(userData);
+          document.getElementById("chat-username").textContent =
+            `Welcome, ${user.username}`;  
+        }
+      })();
+      /* ---------------- SCREEN SWITCHER ---------------- */
+      function switchScreen(screen, element) {
+        document
+          .querySelectorAll(".menu-item")
+          .forEach((i) => i.classList.remove("active"));
+        element.classList.add("active");
+
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => (s.style.display = "none"));
+        document.getElementById(screen).style.display = "block";
+      }
+
+      /* ---------------- SEARCH FRIENDS ---------------- */
+      document
+        .getElementById("searchInput")
+        .addEventListener("keyup", async function () {
+          const query = this.value.trim();
+          const resultsBox = document.getElementById("searchResults");
+
+          if (query.length === 0) {
+            resultsBox.innerHTML = "";
+            return;
+          }
+
+          try {
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`/api/friends/search?username=${query}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+
+            const data = await res.json();
+            const users = data.users || [];
+
+            let html = "";
+            users.forEach((user) => {
+              html += `
+            <li class="search-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded shadow-sm" data-id="${user.id}">
+                <strong>${user.username}</strong>
+
+                <div class="btn-group">
+                    <button class="send-req-btn btn btn-primary fancy-btn" data-id="${user.id}">
+                        Send Request
+                    </button>
+
+                    <button class="msg-btn btn btn-success fancy-btn" data-id="${user.id}">
+                        Message
+                    </button>
+                </div>
+            </li>
+            `;
+            });
+
+            resultsBox.innerHTML = html;
+          } catch (err) {
+            console.error("Search failed:", err);
+          }
+        });
+
+      /* ---------------- SEARCH LIST CLICK EVENTS ---------------- */
+      document
+        .getElementById("searchResults")
+        .addEventListener("click", async function (e) {
+          const target = e.target;
+
+          /* ---- SEND REQUEST ---- */
+          if (target.classList.contains("send-req-btn")) {
+            const userId = target.dataset.id;
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`/api/friends/request/${userId}`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = await res.json();
+            alert(data.message);
+            return;
+          }
+
+          /* ---- MESSAGE ---- */
+          if (target.classList.contains("msg-btn")) {
+            const userId = target.dataset.id;
+            openChatWith(userId);
+            return;
+          }
+
+          /* ---- CLICK ON USERNAME TO OPEN CHAT ---- */
+          const li = target.closest(".search-item");
+          if (
+            li &&
+            !target.classList.contains("send-req-btn") &&
+            !target.classList.contains("msg-btn")
+          ) {
+            const userId = li.dataset.id;
+            openChatWith(userId);
+          }
+        });
+
+      /* ---------------- OPEN CHAT ---------------- */
+      async function openChatWith(userId) {
+        switchScreen("chatScreen", document.getElementById("menuChats"));
+        loadChatMessages(userId);
+      }
+
+      /* ---------------- LOAD FRIEND LIST ---------------- */
+      async function loadFriends() {
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/friends/list", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await res.json();
+        const list = data.friends || [];
+
+        let html = "";
+        list.forEach((friend) => {
+          html += `
+            <li class="friend-item p-2 border-bottom" data-id="${friend.id}">
+                ${friend.username}
+            </li>
+        `;
+        });
+
+        document.getElementById("friendList").innerHTML = html;
+      }
+
+      /* ---- CLICK FRIEND FROM SIDEBAR TO OPEN CHAT ---- */
+      document
+        .getElementById("friendList")
+        .addEventListener("click", function (e) {
+          const li = e.target.closest(".friend-item");
+          if (!li) return;
+
+          const userId = li.dataset.id;
+          openChatWith(userId);
+        });
+
+      /* ---------------- LOAD CHAT MESSAGES ---------------- */
+      async function loadChatMessages(userId) {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`/api/messages/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await res.json();
+
+        let html = "";
+        data.messages.forEach((msg) => {
+          html += `
+            <div class="message">
+                <strong>${msg.senderName}: </strong> ${msg.text}
+            </div>
+        `;
+        });
+
+        document.getElementById("chatMessages").innerHTML = html;
+      }
+
+      /* ---------------- SEND MESSAGE ---------------- */
+      document
+        .getElementById("sendMsgBtn")
+        .addEventListener("click", async function () {
+          const token = localStorage.getItem("token");
+          const text = document.getElementById("messageInput").value;
+          const userId = document.getElementById("chatMessages").dataset.id;
+
+          if (!text.trim()) return;
+
+          await fetch(`/api/messages/${userId}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text }),
+          });
+
+          document.getElementById("messageInput").value = "";
+          loadChatMessages(userId);
+        });
+
+      /* ---------------- SHOW FRIEND REQUESTS ---------------- */
+      document
+        .getElementById("menuRequests")
+        .addEventListener("click", async () => {
+          const token = localStorage.getItem("token");
+
+          const res = await fetch("/api/friends/requests", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          const data = await res.json();
+
+          let html = "<h3>Friend Requests</h3>";
+
+          data.requests.forEach((req) => {
+            html += `
+            <div class="req-box">
+                ${req.username} sent you a request
+                <button class="accept-btn" data-id="${req.id}">Accept</button>
+            </div>
+        `;
+          });
+
+          document.getElementById("chatArea").innerHTML = html;
+        });
+
+      /* ---- ACCEPT REQUEST ---- */
+      document.addEventListener("click", async function (e) {
+        if (e.target.classList.contains("accept-btn")) {
+          const id = e.target.dataset.id;
+          const token = localStorage.getItem("token");
+
+          await fetch(`/api/friends/accept/${id}`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          alert("Request Accepted!");
+          loadFriends();
+        }
+      });
+
+      /* ---------------- LOGOUT ---------------- */
+      function logoutUser() {
+        localStorage.removeItem("token");
+        location.href = "/auth.html";
+      }
+
+      /* ---------------- AUTO LOAD FRIEND LIST ON START ---------------- */
+      loadFriends();
+
+      
+    </script>
+  </body>
+</html>

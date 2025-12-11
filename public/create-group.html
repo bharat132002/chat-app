@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Create Group — Neon</title>
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0f1a; --panel:#0f1724; --accent:#7c3aed; --accent2:#06b6d4;
+      color-scheme: dark;
+    }
+    body{ background: linear-gradient(135deg,#020617 0%, #071129 50%, #0b1a2f 100%);
+          font-family: Inter, system-ui;
+          min-height:100vh; color:#e6eef8;
+          padding:30px;
+    }
+    .card{
+      width:100%; max-width:720px; margin:auto;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(124,58,237,0.12); padding:28px;
+      border-radius:14px; box-shadow: 0 10px 40px rgba(2,6,23,0.6);
+      backdrop-filter: blur(6px);
+    }
+    h1{ margin:0 0 6px 0; font-weight:700; color: #f8fafc; letter-spacing:-0.3px; }
+    p.lead{ color: #cfe7ff; opacity:0.8; margin-bottom:18px; }
+    .avatar-upload{ display:flex; gap:16px; align-items:center; }
+    .avatar-preview{
+      width:96px; height:96px; border-radius:18px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex; align-items:center; justify-content:center; 
+      color:white; font-weight:700; font-size:18px;
+      box-shadow: 0 6px 20px rgba(7,6,43,0.6), inset 0 -6px 20px rgba(0,0,0,0.18);
+      background-size: cover;
+      background-position: center;
+    }
+    .file-input{ color:#9fbce9; }
+    .form-control{
+      background: rgba(255,255,255,0.02); 
+      border:1px solid rgba(255,255,255,0.04); 
+      color:#e6eef8;
+    }
+    .neon-btn{
+      background: linear-gradient(90deg,var(--accent),var(--accent2));
+      border:none; padding:10px 18px; color:#021024;
+      font-weight:700; border-radius:10px;
+      box-shadow: 0 6px 30px rgba(124,58,237,0.18);
+    }
+    .muted{ color: #a8c0e6; opacity:0.85; font-size:13px; }
+    .members-list{ margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; }
+    .member-pill{
+      background: rgba(255,255,255,0.03);
+      padding:8px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03);
+    }
+  </style>
+</head>
+
+<body>
+
+  <button onclick="goBack()" class="btn btn-secondary mb-3">← Back</button>
+
+  <div class="card">
+    <h1>Create Neon Group</h1>
+    <p class="lead">Give your group a name, add a cool image and invite members.</p>
+
+    <!-- Avatar Upload -->
+    <div class="avatar-upload">
+      <div id="avatarPreview" class="avatar-preview">GP</div>
+      <div style="flex:1">
+        <label class="muted">Group Photo</label>
+        <input id="photoInput" type="file" accept="image/*" class="form-control file-input" />
+        <div class="small-note">Max 5MB. Square images look best.</div>
+      </div>
+    </div>
+
+    <!-- Group Name -->
+    <div style="margin-top:18px;">
+      <label class="muted">Group Name</label>
+      <input id="groupName" class="form-control" placeholder="e.g. Design Crew" />
+    </div>
+
+    <!-- Group Bio -->
+    <div style="margin-top:12px;">
+      <label class="muted">Group Bio</label>
+      <textarea id="groupBio" class="form-control" rows="3" placeholder="Short description or topic"></textarea>
+    </div>
+
+    <!-- Create Button -->
+    <div style="display:flex; gap:10px; margin-top:16px; align-items:center;">
+      <button id="createBtn" class="neon-btn">Create Group</button>
+      <div id="status" class="muted">Ready</div>
+    </div>
+
+  </div>
+<script>
+
+// ===== Avatar Preview ====
+const photoInput = document.getElementById("photoInput");
+const avatarPreview = document.getElementById("avatarPreview");
+
+photoInput.addEventListener("change", () => {
+  const file = photoInput.files[0];
+  if (file) {
+    avatarPreview.style.backgroundImage = `url(${URL.createObjectURL(file)})`;
+    avatarPreview.textContent = "";
+  }
+});
+
+// ===== BACK BUTTON ====
+function goBack() {
+  window.history.back();
+}
+
+// ===== CREATE GROUP ====
+document.getElementById("createBtn").addEventListener("click", async () => {
+  const name = document.getElementById("groupName").value.trim();
+  const bio = document.getElementById("groupBio").value.trim();
+  const status = document.getElementById("status");
+
+  if (!name) {
+    status.textContent = "❌ Group name is required!";
+    status.style.color = "red";
+    return;
+  }
+
+  status.textContent = "⏳ Creating group...";
+  status.style.color = "#a8c0e6";
+
+  const token = localStorage.getItem("token"); // token stored after login?
+
+  if (!token) {
+    status.textContent = "❌ Login required!";
+    return;
+  }
+
+  // Prepare FormData
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("bio", bio);
+
+  if (photoInput.files[0]) {
+    formData.append("photo", photoInput.files[0]);
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/api/groups/create", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+      },
+      body: formData
+    });
+
+    const data = await res.json();
+    console.log("SERVER RESPONSE:", data);
+
+    if (!data.success) {
+      status.textContent = "❌ " + data.msg;
+      status.style.color = "red";
+      return;
+    }
+
+    status.textContent = "✅ Group Created Successfully!";
+    status.style.color = "#4ade80";
+
+    // Redirect to group page after creation (optional)
+    // window.location.href = `/group.html?id=${data.group.id}`;
+
+  } catch (err) {
+    console.error(err);
+    status.textContent = "❌ Server error!";
+  }
+});
+
+</script>
+
+</body>
+</html>

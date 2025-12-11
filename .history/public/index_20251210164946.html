@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Msg❤️Dekh</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+
+    <style>
+      /* (kept your visual style, slightly cleaned) */
+      body {
+        margin: 0;
+        background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+        font-family: "Poppins",sans-serif;
+        color: #fff;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .main { display: flex; height: calc(100vh - 62px); } /* -topbar */
+      .top-bar {
+        height: 62px;
+        padding: 12px 20px;
+        background:#1f2937;
+        border-bottom:2px solid #374151;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        font-size:18px;
+      }
+
+      .sidebar {
+        width: 270px;
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px);
+        padding: 20px;
+        border-right: 1px solid rgba(255,255,255,0.12);
+      }
+
+      .sidebar h2 { text-align:center; margin-bottom:18px; }
+      .menu-item {
+        padding: 12px;
+        margin-top:10px;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        border-radius:10px;
+        cursor:pointer;
+        background: rgba(255,255,255,0.04);
+      }
+      .menu-item:hover { transform:scale(1.02); background: rgba(255,255,255,0.12); }
+
+      #friendSubmenu, #groupSubmenu { list-style:none; padding-left:0; margin-top:8px; }
+      #friendSubmenu li, #groupSubmenu li { margin-top:6px; }
+
+      .screen { flex:1; padding:24px; overflow:auto; display:none; }
+      .screen.active { display:block; }
+
+      .search-item {
+        padding:12px;
+        background: rgba(255,255,255,0.06);
+        border-radius:10px;
+        margin-bottom:10px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+      }
+
+      .fancy-btn { border-radius:24px; padding:6px 12px; font-weight:600; }
+
+      /* small responsive */
+      @media (max-width:900px) {
+        .sidebar { display:none; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div id="chat-username">Welcome</div>
+      <div>
+        <button class="btn btn-sm btn-light" onclick="logoutUser()">Logout</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <h2>Msg <span style="color:#ff6b6b">❤️</span> Dekh</h2>
+
+        <div class="menu-item" id="menuFriends" onclick="toggleFriendMenu()">
+          <i class="fa-solid fa-user"></i> Friends
+        </div>
+        <ul id="friendSubmenu" style="display:none; margin-left:12px;">
+          <li class="menu-item" id="menuFriendRequests" onclick="loadFriendRequests()">Friend Requests</li>
+          <li class="menu-item" id="menuMyFriends" onclick="loadMyFriends()">My Friends</li>
+        </ul>
+
+        <div class="menu-item" onclick="toggleGroupMenu()">
+          <i class="fa-solid fa-user-group"></i> Groups
+        </div>
+
+        <!-- GROUP SUBMENU (placed inside sidebar) -->
+        <ul id="groupSubmenu" style="display:none; margin-left:12px;">
+          <li class="menu-item" onclick="switchScreen('createGroupScreen')">Create Group</li>
+          <li class="menu-item" onclick="switchScreen('groupRequestsScreen')">Group Requests</li>
+          <li class="menu-item" onclick="switchScreen('myGroupsScreen')">My Groups</li>
+        </ul>
+      </div>
+
+      <!-- SCREENS -->
+      <div class="screen active" id="friendsScreen">
+        <h3>Search Friends</h3>
+        <input id="searchInput" class="form-control mt-2" placeholder="Search users by username..." />
+        <ul id="searchResults" style="padding-left:0; margin-top:12px;"></ul>
+      </div>
+
+      <div class="screen" id="friendRequestsScreen">
+        <h3>Friend Requests</h3>
+        <ul id="requestsList" style="padding-left:0; margin-top:12px;"></ul>
+      </div>
+
+      <div class="screen" id="myFriendsScreen">
+        <h3>My Friends</h3>
+        <ul id="myFriendsList" style="padding-left:0; margin-top:12px;"></ul>
+      </div>
+
+      <!-- CREATE GROUP -->
+      <div class="screen" id="createGroupScreen">
+        <h3>Create Group</h3>
+
+        <form id="createGroupForm" onsubmit="return false;" style="max-width:560px;">
+          <input id="groupName" class="form-control mt-2" placeholder="Group name" />
+          <textarea id="groupBio" class="form-control mt-2" placeholder="Short bio / description"></textarea>
+          <input id="groupImage" type="file" accept="image/*" class="form-control mt-2" />
+          <div class="mt-3">
+            <button class="btn btn-primary" onclick="createGroup()">Create Group</button>
+            <button class="btn btn-outline-secondary" onclick="switchScreen('myGroupsScreen')">Cancel</button>
+          </div>
+          <div id="createGroupMsg" class="mt-2"></div>
+        </form>
+      </div>
+
+      <!-- GROUP REQUESTS -->
+      <div class="screen" id="groupRequestsScreen">
+        <h3>Group Join Requests</h3>
+        <ul id="groupRequestList" style="padding-left:0; margin-top:12px;"></ul>
+      </div>
+
+      <!-- MY GROUPS -->
+      <div class="screen" id="myGroupsScreen">
+        <h3>My Groups</h3>
+        <ul id="myGroupsList" style="padding-left:0; margin-top:12px;"></ul>
+      </div>
+    </div>
+
+    <script>
+      /* ------------------ Helpers & startup ------------------ */
+      const API = ""; // if frontend served same origin, keep empty; otherwise set e.g. "http://localhost:5000"
+      function getToken() { return localStorage.getItem("token"); }
+      function getUser() { try { return JSON.parse(localStorage.getItem("user") || "null"); } catch(e){ return null; } }
+      (function setNavName(){ const u=getUser(); if(u) document.getElementById("chat-username").textContent = "Welcome, " + (u.username||u.email||"User"); })();
+
+      function logoutUser(){ localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href="/auth.html"; }
+
+      function switchScreen(screenId){
+        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+        const el = document.getElementById(screenId);
+        if(el) el.classList.add("active");
+      }
+
+      function toggleFriendMenu(){
+        const m = document.getElementById("friendSubmenu");
+        m.style.display = m.style.display === "none" ? "block" : "none";
+      }
+      function toggleGroupMenu(){
+        const m = document.getElementById("groupSubmenu");
+        m.style.display = m.style.display === "none" ? "block" : "none";
+      }
+
+      /* ------------------ Search users (unchanged) ------------------ */
+      document.getElementById("searchInput").addEventListener("keyup", async function(){
+        const q = this.value.trim();
+        const resultsBox = document.getElementById("searchResults");
+        if(!q){ resultsBox.innerHTML = ""; return; }
+        const token = getToken();
+        try {
+          const res = await fetch(API + "/api/friends/search?username="+encodeURIComponent(q), {
+            headers: { "Authorization": "Bearer " + token }
+          });
+          if(!res.ok) { resultsBox.innerHTML = "<li class='text-danger'>Search failed</li>"; return; }
+          const data = await res.json();
+          const users = data.users || [];
+          let html = "";
+          users.forEach(u => {
+            html += `<li class="search-item" data-id="${u.id}">
+                      <div><strong>${u.username}</strong><div style="font-size:12px;color:#ccc">${u.email||""}</div></div>
+                      <div>
+                        <button class="btn btn-sm btn-primary fancy-btn" data-id="${u.id}" data-act="send">Send Request</button>
+                        <button class="btn btn-sm btn-success fancy-btn" data-id="${u.id}" data-act="msg">Message</button>
+                      </div>
+                    </li>`;
+          });
+          resultsBox.innerHTML = html;
+        } catch(err){
+          console.error(err);
+          resultsBox.innerHTML = "<li class='text-danger'>Network error</li>";
+        }
+      });
+
+      // handle clicks in search results (send request / message)
+      document.getElementById("searchResults").addEventListener("click", async function(e){
+        const btn = e.target.closest("button");
+        if(!btn) return;
+        const act = btn.dataset.act;
+        const id = btn.dataset.id;
+        const token = getToken();
+        if(act === "send"){
+          if(!token){ alert("Please login"); return; }
+          try {
+            const res = await fetch(API + "/api/friends/send", { method:"POST", headers:{ "Authorization":"Bearer " + token }, body: JSON.stringify({ receiverId: Number(id) }) });
+            const json = await res.json();
+            alert(json.msg || json.message || "Done");
+          } catch(err){ console.error(err); alert("Error"); }
+        } else if(act === "msg"){
+          // open chat — set storage and go to chat page
+          const user = getUser();
+          localStorage.setItem("chatUserId", id);
+          localStorage.setItem("chatUserName", btn.closest(".search-item").querySelector("strong").textContent);
+          window.location.href = "/chat.html";
+        }
+      });
+
+      /* ------------------ Friend requests screen ------------------ */
+      async function loadFriendRequests(){
+        switchScreen("friendRequestsScreen");
+        const token = getToken();
+        const list = document.getElementById("requestsList");
+        list.innerHTML = "<li>Loading...</li>";
+        try {
+          const res = await fetch(API + "/api/friends/pending", { headers: { "Authorization":"Bearer " + token }});
+          if(!res.ok){ list.innerHTML = "<li class='text-danger'>Failed to load</li>"; return; }
+          const data = await res.json();
+          if(!data.success || !data.requests || data.requests.length === 0){ list.innerHTML = "<li>No pending requests</li>"; return; }
+          list.innerHTML = "";
+          data.requests.forEach(r=>{
+            const li = document.createElement("li");
+            li.className = "search-item";
+            li.innerHTML = `<div><strong>${r.Sender.username}</strong></div>
+                            <div>
+                              <button class="btn btn-sm btn-success" onclick="acceptFriend(${r.id})">Accept</button>
+                              <button class="btn btn-sm btn-danger" onclick="rejectFriend(${r.id})">Reject</button>
+                            </div>`;
+            list.appendChild(li);
+          });
+        } catch(err){ console.error(err); list.innerHTML = "<li class='text-danger'>Error</li>"; }
+      }
+      async function acceptFriend(requestId){
+        const token = getToken();
+        try {
+          const res = await fetch(API + "/api/friends/accept/" + requestId, { method:"POST", headers:{ "Authorization":"Bearer " + token }});
+          const d = await res.json();
+          alert(d.msg || "Accepted");
+          loadFriendRequests();
+        } catch(err){ console.error(err); alert("Error"); }
+      }
+      async function rejectFriend(requestId){
+        const token = getToken();
+        try {
+          const res = await fetch(API + "/api/friends/reject/" + requestId, { method:"POST", headers:{ "Authorization":"Bearer " + token }});
+          const d = await res.json();
+          alert(d.msg || "Rejected");
+          loadFriendRequests();
+        } catch(err){ console.error(err); alert("Error"); }
+      }
+
+      /* ------------------ My friends ------------------ */
+      async function loadMyFriends(){
+        switchScreen("myFriendsScreen");
+        const token = getToken();
+        const list = document.getElementById("myFriendsList");
+        list.innerHTML = "<li>Loading...</li>";
+        try {
+          const res = await fetch(API + "/api/friends/all", { headers: { "Authorization":"Bearer " + token }});
+          if(!res.ok){ list.innerHTML = "<li class='text-danger'>Failed to load</li>"; return; }
+          const data = await res.json();
+          if(!data.success || !data.friends || data.friends.length === 0){ list.innerHTML = "<li>No friends yet</li>"; return; }
+          list.innerHTML = "";
+          const myId = (getUser()||{}).id;
+          data.friends.forEach(f=>{
+            const friend = (f.senderId === myId) ? f.Receiver : f.Sender;
+            const li = document.createElement("li");
+            li.className = "search-item";
+            li.innerHTML = `<div><strong>${friend.username}</strong></div>
+                            <div><button class="btn btn-sm btn-success" onclick="startChat(${friend.id}, '${friend.username.replace(/'/g, "\\'")}')">Message</button></div>`;
+            list.appendChild(li);
+          });
+        } catch(err){ console.error(err); list.innerHTML = "<li class='text-danger'>Error</li>"; }
+      }
+
+      function startChat(friendId, friendName){
+        localStorage.setItem("chatUserId", String(friendId));
+        localStorage.setItem("chatUserName", String(friendName));
+        window.location.href = "/chat.html";
+      }
+
+      /* ------------------ Groups: create / my / requests ------------------ */
+
+      // Create group -> IMPORTANT: server expects file field named "photo"
+      async function createGroup(){
+        const token = getToken();
+        if(!token){ alert("Login required"); return; }
+
+        const name = document.getElementById("groupName").value.trim();
+        const bio = document.getElementById("groupBio").value.trim();
+        const file = document.getElementById("groupImage").files[0];
+
+        if(!name){ document.getElementById("createGroupMsg").textContent = "Group name required"; return; }
+
+        const fd = new FormData();
+        fd.append("name", name);
+        fd.append("bio", bio);
+        if(file) fd.append("photo", file); // <-- IMPORTANT: "photo" matches multer upload.single("photo")
+
+        document.getElementById("createGroupMsg").textContent = "Creating...";
+
+        try {
+          const res = await fetch(API + "/api/groups/create", {
+            method: "POST",
+            headers: { "Authorization":"Bearer " + token },
+            body: fd
+          });
+          const d = await res.json();
+          if(!res.ok){ document.getElementById("createGroupMsg").textContent = d.msg || d.message || "Create failed"; return; }
+          document.getElementById("createGroupMsg").textContent = "Group created!";
+          // refresh my groups
+          switchScreen("myGroupsScreen");
+          loadMyGroups();
+        } catch(err){
+          console.error(err);
+          document.getElementById("createGroupMsg").textContent = "Network error";
+        }
+      }
+
+      // load my groups: expects backend endpoint GET /api/groups/my
+      async function loadMyGroups(){
+        switchScreen("myGroupsScreen");
+        const token = getToken();
+        const list = document.getElementById("myGroupsList");
+        list.innerHTML = "<li>Loading...</li>";
+        try {
+          const res = await fetch(API + "/api/groups/my", { headers: { "Authorization":"Bearer " + token }});
+          if(!res.ok){
+            // helpful error
+            const t = await res.text();
+            list.innerHTML = "<li class='text-danger'>Failed to load groups (check /api/groups/my)</li>";
+            console.error("groups/my failed:", t);
+            return;
+          }
+          const d = await res.json();
+          if(!d.success || !d.groups || d.groups.length === 0){ list.innerHTML = "<li>No groups yet</li>"; return; }
+          list.innerHTML = "";
+          d.groups.forEach(g=>{
+            const li = document.createElement("li");
+            li.className = "search-item";
+            li.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
+                              <div>
+                                <strong>${g.name}</strong><div style="font-size:12px;color:#ccc">${g.bio||""}</div>
+                              </div>
+                              <div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="openGroup(${g.id})">Open</button>
+                              </div>
+                            </div>`;
+            list.appendChild(li);
+          });
+        } catch(err){ console.error(err); list.innerHTML = "<li class='text-danger'>Error loading groups</li>"; }
+      }
+
+      // group requests list: expects GET /api/groups/requests
+      async function loadGroupRequests(){
+        switchScreen("groupRequestsScreen");
+        const token = getToken();
+        const list = document.getElementById("groupRequestList");
+        list.innerHTML = "<li>Loading...</li>";
+        try {
+          const res = await fetch(API + "/api/groups/requests", { headers:{ "Authorization":"Bearer " + token }});
+          if(!res.ok){ list.innerHTML = "<li class='text-danger'>Failed to load requests</li>"; return; }
+          const d = await res.json();
+          list.innerHTML = "";
+          (d.requests||[]).forEach(r=>{
+            const li = document.createElement("li");
+            li.className = "search-item";
+            li.innerHTML = `<div><strong>${r.User?.username||r.username||"Unknown"}</strong><div style="font-size:12px;color:#ccc">for group ${r.groupId || r.Group?.name || ''}</div></div>
+                            <div>
+                              <button class="btn btn-sm btn-success" onclick="approveRequest(${r.id})">Approve</button>
+                              <button class="btn btn-sm btn-danger" onclick="rejectGroupRequest(${r.id})">Reject</button>
+                            </div>`;
+            list.appendChild(li);
+          });
+        } catch(err){ console.error(err); list.innerHTML = "<li class='text-danger'>Error</li>"; }
+      }
+
+      function openGroup(groupId){ // just a placeholder to navigate to group page
+        localStorage.setItem("openGroupId", String(groupId));
+        window.location.href = "/group.html"; // create separate UI for group chat/manage
+      }
+
+      async function approveRequest(requestId){
+        const token = getToken();
+        try {
+          const res = await fetch(API + "/api/groups/requests/" + requestId + "/approve", { method:"POST", headers:{ "Authorization":"Bearer " + token }});
+          const d = await res.json();
+          alert(d.msg || "Approved");
+          loadGroupRequests();
+        } catch(err){ console.error(err); alert("Error"); }
+      }
+      async function rejectGroupRequest(requestId){
+        const token = getToken();
+        try {
+          const res = await fetch(API + "/api/groups/requests/" + requestId + "/reject", { method:"POST", headers:{ "Authorization":"Bearer " + token }});
+          const d = await res.json();
+          alert(d.msg || "Rejected");
+          loadGroupRequests();
+        } catch(err){ console.error(err); alert("Error"); }
+      }
+
+      /* ------------------ initial UI: show friends screen ------------------ */
+      switchScreen("friendsScreen");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Group Chat App</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    #chatBox {
+      width: 400px; height: 300px; border: 1px solid #aaa;
+      padding: 10px; overflow-y: scroll; margin-bottom: 10px;
+    }
+    .msg { padding: 6px; margin: 5px; background: #eee; border-radius: 4px; }
+    .me { background: #cce5ff; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <h2>Group Chat</h2>
+
+  <!-- USERNAME -->
+  <input id="username" placeholder="Enter your name" />
+  <button onclick="setName()">Set Name</button>
+  <br><br>
+
+  <!-- JOIN GROUP -->
+  <input id="groupName" placeholder="Group Name (e.g. friends)" />
+  <button onclick="joinGroup()">Join Group</button>
+  <br><br>
+
+  <!-- SEND MESSAGE -->
+  <input id="gmsg" placeholder="Type message..." />
+  <button onclick="sendGroupMsg()">Send</button>
+
+  <h3>Messages</h3>
+  <div id="chatBox"></div>
+
+  <script>
+    const socket = io("http://localhost:5000");
+    let myName = "";
+
+    function setName() {
+      myName = document.getElementById("username").value;
+      alert("Name saved: " + myName);
+    }
+
+    function joinGroup() {
+      let group = document.getElementById("groupName").value;
+      socket.emit("joinGroup", group);
+      alert("Joined Group: " + group);
+    }
+
+    function sendGroupMsg() {
+      let text = document.getElementById("gmsg").value;
+      let group = document.getElementById("groupName").value;
+
+      socket.emit("groupMessage", {
+        sender: myName,
+        message: text,
+        group: group,
+      });
+
+      showMsg(`You: ${text}`, true);
+    }
+
+    socket.on("groupMessage", (data) => {
+      showMsg(`${data.sender}: ${data.message}`);
+    });
+
+    function showMsg(txt, mine = false) {
+      let box = document.getElementById("chatBox");
+      let div = document.createElement("div");
+      div.className = mine ? "msg me" : "msg";
+      div.innerText = txt;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>

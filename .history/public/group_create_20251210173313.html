@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Create Group — Neon</title>
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0f1a; --panel:#0f1724; --accent:#7c3aed; --accent2:#06b6d4;
+      color-scheme: dark;
+    }
+    body{ background: linear-gradient(135deg,#020617 0%, #071129 50%, #0b1a2f 100%); font-family: Inter, system-ui; min-height:100vh; color:#e6eef8; display:flex; align-items:center; justify-content:center; padding:30px;}
+    .card{
+      width:100%; max-width:720px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(124,58,237,0.12); padding:28px; border-radius:14px; box-shadow: 0 10px 40px rgba(2,6,23,0.6);
+      backdrop-filter: blur(6px);
+    }
+    h1{ margin:0 0 6px 0; font-weight:700; color: #f8fafc; letter-spacing: -0.3px; }
+    p.lead{ color: #cfe7ff; opacity:0.8; margin-bottom:18px; }
+    .avatar-upload{ display:flex; gap:16px; align-items:center; }
+    .avatar-preview{
+      width:96px; height:96px; border-radius:18px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:18px;
+      box-shadow: 0 6px 20px rgba(7,6,43,0.6), inset 0 -6px 20px rgba(0,0,0,0.18);
+    }
+    .file-input{ color:#9fbce9; }
+    .form-control{ background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color:#e6eef8; }
+    .neon-btn{ background: linear-gradient(90deg,var(--accent),var(--accent2)); border:none; padding:10px 18px; color:#021024; font-weight:700; border-radius:10px; box-shadow: 0 6px 30px rgba(124,58,237,0.18); }
+    .muted{ color: #a8c0e6; opacity:0.85; font-size:13px; }
+    .members-list{ margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; }
+    .member-pill{ background: rgba(255,255,255,0.03); padding:8px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); }
+    .small-note{ font-size:13px; color:#a9c9e9; opacity:0.8; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Create Neon Group</h1>
+    <p class="lead">Give your group a name, add a cool image and invite members.</p>
+
+    <div class="avatar-upload">
+      <div id="avatarPreview" class="avatar-preview">GP</div>
+      <div style="flex:1">
+        <label class="muted">Group Photo</label>
+        <input id="photoInput" type="file" accept="image/*" class="form-control file-input" />
+        <div class="small-note">Max 5MB. Square images look best.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <label class="muted">Group Name</label>
+      <input id="groupName" class="form-control" placeholder="e.g. Design Crew" />
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="muted">Group Bio</label>
+      <textarea id="groupBio" class="form-control" rows="3" placeholder="Short description or topic"></textarea>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:16px; align-items:center;">
+      <button id="createBtn" class="neon-btn">Create Group</button>
+      <div id="status" class="muted">Ready</div>
+    </div>
+
+    <hr style="border-color: rgba(255,255,255,0.03); margin-top:18px;" />
+
+    <div class="members-section">
+      <label class="muted">Invite members after create</label>
+      <div class="small-note">You will be added as admin automatically.</div>
+
+      <div style="margin-top:10px;">
+        <input id="searchMember" placeholder="Search friends to invite (type username...)" class="form-control" />
+        <div id="searchResults" style="margin-top:10px;"></div>
+        <div class="members-list" id="selectedMembers"></div>
+        <button id="addMembersBtn" class="neon-btn" style="margin-top:12px; display:none;">Add Selected Members</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // small helper
+  const statusEl = document.getElementById('status');
+  const avatarPreview = document.getElementById('avatarPreview');
+  let selectedImageFile = null;
+  const photoInput = document.getElementById('photoInput');
+  const groupNameInput = document.getElementById('groupName');
+  const groupBioInput = document.getElementById('groupBio');
+  const createBtn = document.getElementById('createBtn');
+  const searchMember = document.getElementById('searchMember');
+  const searchResults = document.getElementById('searchResults');
+  const selectedMembers = document.getElementById('selectedMembers');
+  const addMembersBtn = document.getElementById('addMembersBtn');
+
+  const token = localStorage.getItem('token'); // auth token
+  const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+  // preview image
+  photoInput.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    selectedImageFile = f;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      avatarPreview.style.backgroundImage = `url(${ev.target.result})`;
+      avatarPreview.textContent = '';
+      avatarPreview.style.backgroundSize = 'cover';
+      avatarPreview.style.backgroundPosition = 'center';
+    };
+    reader.readAsDataURL(f);
+  });
+
+  // create group
+  createBtn.addEventListener('click', async () => {
+    const name = groupNameInput.value.trim();
+    const bio = groupBioInput.value.trim();
+
+    if (!name) return alert('Group name required');
+
+    statusEl.textContent = 'Creating...';
+    createBtn.disabled = true;
+
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('bio', bio);
+    if (selectedImageFile) fd.append('photo', selectedImageFile);
+
+    try {
+      const res = await fetch('/api/groups/create', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.msg || 'Create failed');
+        statusEl.textContent = 'Error';
+      } else {
+        statusEl.textContent = 'Created ✔';
+        // show members add UI
+        window.createdGroupId = data.group.id;
+        addMembersBtn.style.display = 'inline-block';
+        alert('Group created — now invite members (or go to group chat).');
+      }
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Server error';
+      alert('Server error');
+    } finally {
+      createBtn.disabled = false;
+    }
+  });
+
+  // simple friend search (calls your existing friends search)
+  let lastQuery = '';
+  let chosen = new Set();
+  searchMember.addEventListener('input', async (e) => {
+    const q = e.target.value.trim();
+    if (!q) { searchResults.innerHTML = ''; return; }
+    if (q === lastQuery) return;
+    lastQuery = q;
+
+    try {
+      const res = await fetch(`/api/friends/search?username=${encodeURIComponent(q)}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const d = await res.json();
+      const users = d.users || [];
+      searchResults.innerHTML = '';
+      users.forEach(u => {
+        const btn = document.createElement('button');
+        btn.className = 'member-pill';
+        btn.textContent = u.username;
+        btn.onclick = () => {
+          if (u.id == currentUser.id) return alert("You are already in group");
+          if (chosen.has(u.id)) return;
+          chosen.add(u.id);
+          const pill = document.createElement('div');
+          pill.className = 'member-pill';
+          pill.textContent = u.username;
+          pill.dataset.id = u.id;
+          pill.onclick = () => {
+            chosen.delete(u.id); pill.remove();
+            if (chosen.size === 0) addMembersBtn.style.display = 'none';
+          };
+          selectedMembers.appendChild(pill);
+          addMembersBtn.style.display = 'inline-block';
+        };
+        searchResults.appendChild(btn);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  // add selected members
+  addMembersBtn.addEventListener('click', async () => {
+    if (!window.createdGroupId) return alert('Create group first');
+    const arr = Array.from(chosen);
+    if (arr.length === 0) return alert('Select members first');
+
+    try {
+      const res = await fetch(`/api/groups/${window.createdGroupId}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ userIds: arr })
+      });
+      const data = await res.json();
+      if (!data.success) return alert(data.msg || 'Add failed');
+      alert('Members added ✔');
+      // optionally redirect to group chat
+      location.href = `/group_chat.html?groupId=${window.createdGroupId}`;
+    } catch (err) {
+      console.error(err);
+      alert('Server error');
+    }
+  });
+</script>
+</body>
+</html>

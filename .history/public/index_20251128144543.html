@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App UI</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #111827;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 270px;
+            height: 100vh;
+            background: #1f2937;
+            padding: 20px;
+            border-right: 2px solid #374151;
+            animation: slideLeft 0.5s ease;
+        }
+
+        @keyframes slideLeft {
+            from { transform: translateX(-50px); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+
+        .menu-item {
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .menu-item:hover, .active-tab {
+            background: #4b5563;
+            transform: scale(1.05);
+        }
+
+        /* Screen Area */
+        .screen {
+            display: none;
+            padding: 20px;
+            height: 100vh;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-box {
+            background: #1f2937;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .message {
+            max-width: 60%;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 18px;
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        .left {
+            background: #374151;
+            align-self: flex-start;
+        }
+
+        .right {
+            background: #3b82f6;
+            align-self: flex-end;
+        }
+
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            overflow-y: auto;
+        }
+
+        .input-box {
+            position: absolute;
+            bottom: 20px;
+            width: 70%;
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="d-flex">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+        <h3>Chat App</h3>
+        <div class="menu-item active-tab" onclick="openScreen('friends')"><i class="ri-user-3-line"></i> Friends</div>
+        <div class="menu-item" onclick="openScreen('groups')"><i class="ri-group-line"></i> Groups</div>
+    </div>
+
+
+    <!-- RIGHT SCREENS -->
+    <div class="flex-grow-1">
+
+        <!-- FRIENDS SCREEN -->
+        <div id="friends" class="screen" style="display:block;">
+            <h2>Friends</h2>
+            <div class="chat-box" onclick="openChat('Friend 1')">💬 Friend 1</div>
+            <div class="chat-box" onclick="openChat('Friend 2')">💬 Friend 2</div>
+        </div>
+
+        <!-- GROUPS SCREEN -->
+        <div id="groups" class="screen">
+            <h2>Groups</h2>
+            <div class="chat-box" onclick="alert('Create Group UI Next Step!')">➕ Create Group</div>
+            <div class="chat-box" onclick="alert('Join Group UI Next Step!')">🔑 Join Group</div>
+            <div class="chat-box">📌 My Groups (Coming Next)</div>
+        </div>
+
+        <!-- CHAT SCREEN -->
+        <div id="chatBox" class="screen">
+            <h2 id="chatTitle"></h2>
+
+            <div class="chat-area" id="messagesArea"></div>
+
+            <div class="input-box">
+                <input type="text" id="msgInput" class="form-control" placeholder="Type message...">
+                <button class="btn btn-primary" onclick="sendMsg()">Send</button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // Switch screen
+    function openScreen(screen) {
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active-tab'));
+        event.target.classList.add('active-tab');
+
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById(screen).style.display = 'block';
+    }
+
+    // Open Chat Window
+    function openChat(name) {
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById('chatBox').style.display = 'block';
+        document.getElementById('chatTitle').innerText = name;
+    }
+
+    // Demo chat messages (frontend only)
+    function sendMsg() {
+        let msg = document.getElementById('msgInput').value;
+        if (!msg) return;
+
+        let box = document.createElement('div');
+        box.className = "message right";
+        box.innerText = msg;
+
+        document.getElementById('messagesArea').appendChild(box);
+        document.getElementById('msgInput').value = "";
+    }
+</script>
+
+</body>
+</html>
